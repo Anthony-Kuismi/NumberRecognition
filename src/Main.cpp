@@ -1,3 +1,5 @@
+
+
 #include <SDL.h>
 #include <stdio.h>
 #include <iostream>
@@ -23,6 +25,10 @@ void printArray1D(double *arr, int size);
 void clearArray1D(double *arr, int size);
 void printArray2D(double *arr, int width, int height);
 void clearArray2D(double *arr, int width, int height);
+double sigmoid(double x);
+void computeNextLayer(double *weights,int weightsWidth,int weightsHeight, double *activations, double *biases, double *nextLayer);
+void populateRandomArray2D(double *arr, int width, int height);
+void populateRandomArray1D(double *arr, int size);
 
 const int INPWIDTH = 24, INPHEIGHT = 32, LAYER2NEURONS = 16, LAYER3NEURONS = 16, OUTPUTNUERONS = 10, PIXELWIDTH = 20;
 double input[INPHEIGHT*INPWIDTH],w1[LAYER2NEURONS][INPHEIGHT*INPWIDTH],w2[LAYER3NEURONS][LAYER2NEURONS],w3[OUTPUTNUERONS][LAYER3NEURONS];
@@ -69,6 +75,10 @@ void mainLoop(){
 }
 //clears the input
 void clear(){
+    //a2 b2 inp w1
+    clearArray1D(a2,LAYER2NEURONS);
+    populateRandomArray1D(b2,LAYER2NEURONS);
+    populateRandomArray2D(*w1,INPWIDTH*INPHEIGHT,LAYER2NEURONS);
     clearArray1D(input,INPWIDTH*INPHEIGHT);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
@@ -102,13 +112,19 @@ void drawAtMouse(){
 }
 //solves and finds the output
 void solve(){
-    //computeNextLayer(*w1,INPWIDTH*INPHEIGHT,INPWIDTH*INPHEIGHT ,*input,LAYER2NEURONS, b2,LAYER2NEURONS, a3,LAYER2NEURONS);
-    printArray1D(input,INPWIDTH*INPHEIGHT);
+    computeNextLayer(*w1,INPWIDTH*INPHEIGHT,LAYER2NEURONS ,input, b2,a2);
+    printArray1D(a2,LAYER2NEURONS);
 }
 //takes in a the weights, activation amounts of previous neurons, and the biases.
-void computeNextLayer(double *weights,int weightsWidth,int weightsHeight, double *activations, int activationsSize, double *biases,int biasSize, double *nextLayer, int nextLayerSize){
+void computeNextLayer(double *weights,int weightsWidth,int weightsHeight, double *activations, double *biases, double *nextLayer){
     //take the sigmoid of the vector multiplation of the weights and the activation and add the bias
-    
+    for(int i = 0; i < weightsHeight; i ++){
+        double activationAmount = 0;
+        for(int j = 0; j < weightsWidth; j++){
+            activationAmount += *((weights+i*weightsWidth)+j)*activations[j];
+        }
+        nextLayer[i]= sigmoid(activationAmount+biases[i]);
+    }
 }
 //clears a 2D array
 void clearArray2D(double *arr, int width, int height){
@@ -141,4 +157,22 @@ void printArray1D(double *arr, int size){
     }
     cout << endl << endl;
 }
-
+//returns sigmoid of a value
+double sigmoid(double x){
+    double bottom = 1+exp(-x);
+    return 1/bottom;
+}
+//creates random values in a 2D array
+void populateRandomArray2D(double *arr, int width, int height){
+    for(int i = 0; i < height; i++){
+        for(int j = 0; j <width; j++){
+            *((arr+i*width)+j) = rand()%3+1;
+        }
+    }
+}
+//creates random values in a 1D array
+void populateRandomArray1D(double *arr, int size){
+    for(int i = 0; i < size; i++){
+        arr[i]= rand()%3+1;
+    }
+}
